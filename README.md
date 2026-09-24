@@ -1,459 +1,351 @@
-# Explainable Deep Learning for Multiclass Lung Cancer Classification Using Chest CT Images
+# Detecting Low-Frequency Network Attacks in Imbalanced Public Network Traffic Datasets
 
-![Python](https://img.shields.io/badge/Python-3.x-blue)
-![TensorFlow](https://img.shields.io/badge/TensorFlow-Keras-orange)
-![Flask](https://img.shields.io/badge/Flask-Local%20Prototype-lightgrey)
-![Dataset License](https://img.shields.io/badge/Dataset%20License-ODbL%20v1.0-green)
+**Author:** BAJI BABU GUDIPATI  
+**Programme:** MSc Advanced Computer Networking  
+**Institution:** Sheffield Hallam University  
 
 ## Project Overview
 
-This repository contains the implementation and supporting artefacts for the MSc Data Science and Artificial Intelligence research project:
+This repository contains the final machine-learning implementation for the MSc dissertation:
 
-**Explainable Deep Learning for Multiclass Lung Cancer Classification Using Chest CT Images**
+**“Detecting Low-Frequency Network Attacks in Imbalanced Public Network Traffic Datasets.”**
 
-The project develops and critically evaluates a leakage-aware deep-learning pipeline for classifying chest CT images into four categories:
+The project investigates whether imbalance-aware machine-learning approaches can improve detection of low-frequency network attack classes in the **UNSW-NB15** benchmark while also measuring the false-alarm cost on genuinely Normal traffic.
 
-- Normal
-- Adenocarcinoma
-- Large Cell Carcinoma
-- Squamous Cell Carcinoma
+The work is an **analytical machine-learning prototype**, not a deployable intrusion-detection system.
 
-The work focuses on dataset quality, duplicate leakage, class imbalance, reproducible preprocessing, model comparison, held-out test evaluation, Grad-CAM explainability, confidence/error analysis and a local Flask prototype.
+## Repository Contents
 
-> **Important:** This is an academic prototype only. It is **not** a clinical diagnostic system and must not be used for diagnosis or treatment decisions.
+```text
+.
+├── final-notebook1.ipynb
+├── Final_unsw_nb15_low_frequency_attack_project/
+│   ├── figures/
+│   ├── validation_model_comparison.csv
+│   ├── final_test_metrics.csv
+│   ├── final_test_classification_report.csv
+│   ├── final_test_per_class_metrics.csv
+│   ├── rare_class_final_test_results.csv
+│   ├── duplicate_cross_split_overlap_audit.csv
+│   ├── generalisation_overlap_sensitivity.csv
+│   ├── deduplicated_training_sensitivity.csv
+│   ├── final_test_normal_false_alarm_breakdown.csv
+│   ├── final_test_average_precision_by_class.csv
+│   ├── final_test_top_confusion_pairs.csv
+│   ├── final_model_feature_importance.csv
+│   ├── final_test_predictions.parquet
+│   ├── selected_final_pipeline.joblib
+│   ├── run_manifest.json
+│   └── REPORT_SUMMARY.md
+└── README.md
+```
 
----
-
-## Research Question
-
-> To what extent can an explainable, leakage-aware deep-learning pipeline reliably classify chest CT images into Normal, adenocarcinoma, large-cell carcinoma and squamous-cell carcinoma categories?
-
-## Aim
-
-To design, implement and critically evaluate an explainable deep-learning pipeline for four-class chest CT classification using licensed secondary data, with attention to data quality, leakage, balanced performance and interpretability.
-
-## Objectives
-
-**O1)** Audit the dataset for image quality, class balance, dimensions and duplicate leakage.  
-**O2)** Build a reproducible preprocessing and training pipeline.  
-**O3)** Compare a Custom CNN, EfficientNetB0 and DenseNet121.  
-**O4)** Select the best model using validation macro-F1 and evaluate it once on the held-out test set.  
-**O5)** Use error analysis, ROC/PR curves and Grad-CAM to interpret model behaviour.  
-**O6)** Integrate the selected model into a local Flask prototype.
-
----
+> Output filenames may differ slightly depending on the final notebook execution.
 
 ## Dataset
 
-The project uses the public **Chest CT-Scan Images** dataset by **Mohamed Hany** on Kaggle.
+The project uses the **UNSW-NB15** intrusion-detection dataset.
 
-**Dataset link:**  
-https://www.kaggle.com/datasets/mohamedhanyyy/chest-ctscan-images
+- Original source: https://research.unsw.edu.au/projects/unsw-nb15-dataset
+- Kaggle version used: https://www.kaggle.com/datasets/dhoogla/unswnb15
 
-### Dataset Classes
+Prepared files:
 
-| Class | Description |
-|---|---|
-| Normal | Normal CT images |
-| Adenocarcinoma | Lung adenocarcinoma |
-| Large Cell Carcinoma | Large-cell carcinoma |
-| Squamous Cell Carcinoma | Squamous-cell lung carcinoma |
-
-### Original Dataset Split
-
-| Split | Images |
-|---|---:|
-| Train | 613 |
-| Validation | 72 |
-| Test | 315 |
-| **Total** | **1,000** |
-
-### Licence
-
-The dataset is reused under the **Open Data Commons Open Database License (ODbL) v1.0**:
-
-https://opendatacommons.org/licenses/odbl/1-0/
-
-Only secondary data are used.
-
----
-
-## Data Quality and Leakage Audit
-
-Before model development, the dataset was audited for:
-
-- image readability
-- class distribution
-- image dimensions
-- file size
-- mean pixel intensity
-- SHA-256 hashes
-- perceptual dHash similarity
-- exact duplicate groups
-- cross-split duplication
-- possible near-duplicate pairs
-
-### Key Audit Findings
-
-- **59 exact duplicate groups** were identified.
-- **22 duplicate groups crossed dataset splits.**
-- **153 repeated copies** were removed.
-- **847 unique-by-content images** remained for leakage-controlled modelling.
-- The Normal class became relatively small after deduplication.
-- Patient-level independence could not be verified because patient identifiers were unavailable.
-
----
-
-## High-Level Architecture
-
-```mermaid
-flowchart LR
-    A[Kaggle CT Dataset] --> B[Audit and EDA]
-    B --> C[Manifest + SHA-256 + dHash]
-    C --> D[Leakage Control]
-    D --> E[Preprocessing]
-    E --> F[Training-Only Augmentation]
-    F --> G1[Custom CNN]
-    F --> G2[EfficientNetB0]
-    F --> G3[DenseNet121]
-    G1 --> H[Validation Comparison]
-    G2 --> H
-    G3 --> H
-    H --> I[Select by Validation Macro-F1]
-    I --> J[Held-Out Test Evaluation]
-    J --> K[Error Analysis + Grad-CAM]
-    K --> L[Flask Prototype]
+```text
+UNSW_NB15_training-set.parquet
+UNSW_NB15_testing-set.parquet
 ```
 
----
+Dataset used in the final run:
 
-## Preprocessing Pipeline
+- Training rows: **175,341**
+- Testing rows: **82,332**
+- Target: `attack_cat`
+- Number of classes: **10**
+- Predictors used: **34**
+  - 31 numerical
+  - 3 categorical: `proto`, `service`, `state`
 
-The preprocessing pipeline included:
+The binary `label` variable is excluded because it directly reveals Normal-versus-Attack status and would introduce target leakage into the multiclass experiment.
 
-1. dataset manifest creation
-2. image integrity checks
-3. exact duplicate detection using SHA-256
-4. perceptual similarity screening using dHash
-5. deterministic leakage control
-6. image resizing to **224 × 224**
-7. RGB conversion
-8. balanced class weighting
-9. conservative training-only augmentation
-10. strict validation/test isolation
+## Low-Frequency Attack Definition
 
-### Training-Only Augmentation
+A class is treated as low-frequency when it represents **less than 2% of the official training set**.
 
-- horizontal flipping
-- small rotation
-- small translation
-- small zoom
-- mild contrast adjustment
+Low-frequency classes:
 
----
+- Analysis
+- Backdoor
+- Shellcode
+- Worms
 
-## Models
+## Machine-Learning Workflow
 
-| Model | Approx. Parameters | Purpose |
-|---|---:|---|
-| Custom CNN | 0.28M | Baseline trained from scratch |
-| EfficientNetB0 | 4.41M | Lightweight transfer-learning model |
-| DenseNet121 | 7.33M | Deeper transfer-learning comparator |
+```text
+Dataset loading
+      ↓
+Data-quality and target-leakage checks
+      ↓
+Class-imbalance analysis
+      ↓
+Duplicate and cross-split overlap audit
+      ↓
+Stratified development/validation split
+      ↓
+Leakage-safe preprocessing
+      ↓
+Baseline and imbalance-aware modelling
+      ↓
+Validation-based model selection
+      ↓
+Refit selected model on full training data
+      ↓
+Official test evaluation
+      ↓
+Class-wise error and false-alarm analysis
+      ↓
+Overlap-free / deduplicated sensitivity analysis
+      ↓
+Feature importance and reproducibility outputs
+```
 
-### Why These Models?
+## Preprocessing
 
-**Custom CNN** provides a simple baseline and shows how a model trained from scratch behaves on this dataset.
+### Numerical features
+- Median imputation
+- `RobustScaler`
 
-**EfficientNetB0** provides a strong balance between transfer-learning performance and model size.
+### Categorical features
+- Most-frequent imputation
+- `OneHotEncoder(handle_unknown="ignore")`
 
-**DenseNet121** provides a deeper comparator with dense feature reuse.
+### Leakage controls
+- Official test data are not used during model selection.
+- Preprocessing is fitted only within training pipelines.
+- Resampling is applied only to training data.
+- The binary `label` feature is excluded.
+- Duplicate and exact cross-split overlap are explicitly audited.
 
----
+## Models Evaluated
 
-## Training Configuration
+1. Dummy Most-Frequent
+2. Logistic Regression
+3. Class-Weighted Logistic Regression
+4. Random Over-Sampling + Logistic Regression
+5. Random Under-Sampling + Random Forest
+6. Balanced Random Forest
+7. XGBoost + Balanced Sample Weights
 
-- Input size: `224 x 224 x 3`
-- Output: 4-class softmax
-- Optimizer: Adam
-- Loss: categorical cross-entropy with label smoothing
-- Class imbalance strategy: balanced class weights
-- Regularisation: dropout
-- Early stopping
-- ReduceLROnPlateau
-- Model checkpointing
-- ImageNet-pretrained weights for transfer-learning models
+## Model Selection
 
----
+The selection hierarchy was:
 
-## Validation Model Comparison
+1. Validation Macro-F1
+2. Validation rare-class Macro-F1
+3. Balanced Accuracy
+4. Lower Normal-to-Attack false-alarm rate as a final tie-breaker
 
-| Model | Validation Macro-F1 | Interpretation |
-|---|---:|---|
-| Custom CNN | 0.097 | Failed to generalise |
-| DenseNet121 | 0.659 | Strong transfer-learning improvement |
-| **EfficientNetB0** | **0.743** | **Selected model** |
+Selected model:
 
-The final model was selected using **validation macro-F1** before the held-out test set was evaluated.
+**XGBoost + Balanced Sample Weights**
 
----
-
-## Held-Out Test Results
+## Final Test Results
 
 | Metric | Result |
 |---|---:|
-| Accuracy | **78.07%** |
-| Balanced Accuracy | **79.89%** |
-| Macro-F1 | **81.31%** |
-| Macro One-vs-Rest ROC-AUC | **92.68%** |
-| Correct predictions | **210 / 269** |
+| Accuracy | 0.6890 |
+| Balanced Accuracy | 0.6231 |
+| Macro-F1 | 0.5027 |
+| Weighted F1 | 0.7417 |
+| MCC | 0.6267 |
+| Rare-Class Macro Recall | 0.5737 |
+| Rare-Class Macro-F1 | 0.2721 |
+| Normal-to-Attack False-Alarm Rate | 0.3789 |
+| Macro ROC-AUC | 0.9603 |
+| Macro Average Precision | 0.5610 |
 
-### Main Error Pattern
+## Main Findings
 
-The most frequent misclassification was:
+- Imbalance-aware learning improved detection of several low-frequency attack classes.
+- Performance differed substantially across minority classes.
+- Shellcode achieved very high recall but relatively low precision.
+- Backdoor achieved moderate recall but poor precision.
+- Analysis remained difficult to classify.
+- Worms produced encouraging results, but test support was very small.
+- The main operational weakness was the **37.89% Normal-to-Attack false-alarm rate**.
+- The dominant error was **Normal → Fuzzers**, with **10,572** Normal observations misclassified as Fuzzers.
+- Exact train-test overlap was substantial, but stricter overlap-free sensitivity analysis showed that the central performance pattern remained broadly stable.
 
-**Squamous Cell Carcinoma → Adenocarcinoma**
+## Robustness Checks
 
-This occurred in **25 of 90 squamous-cell test images**.
+The notebook includes:
 
----
+- duplicate-row analysis
+- predictor overlap analysis
+- predictor-plus-target signature overlap analysis
+- unique / overlap-free test evaluation
+- deduplicated-training sensitivity analysis
+- fixed random seed
+- saved model pipeline
+- execution manifest
 
-## Evaluation Metrics
+The strict unique and overlap-free test subset contained **48,400 observations**.
 
-The project uses:
+## Visualisations
 
-- Accuracy
-- Precision
-- Recall / Sensitivity
-- Specificity
-- F1-Score
-- Macro-F1
-- Balanced Accuracy
-- ROC-AUC
-- PR-AUC
-- Confusion Matrix
+The notebook generates figures for:
 
-Accuracy alone was not sufficient because the classes were imbalanced.
+- training class distribution
+- train/test class proportions
+- duplicate and cross-split overlap
+- protocol distribution
+- service distribution
+- state distribution
+- numeric-feature skewness
+- Spearman correlation
+- validation model comparison
+- rare-class Macro-F1
+- confusion matrices
+- per-class precision / recall / F1
+- false-positive rates
+- precision-recall curves
+- average precision
+- actual vs predicted counts
+- Normal false-alarm breakdown
+- top misclassification pairs
+- XGBoost feature importance
+- robustness comparisons
 
----
-
-## Grad-CAM Explainability
-
-Grad-CAM was used to inspect which regions of a CT image influenced the final model's prediction.
-
-The method:
-
-1. extracts convolutional feature maps
-2. calculates gradients for the predicted class
-3. weights the feature maps using those gradients
-4. produces a heatmap
-5. overlays the heatmap on the original CT image
-
-Grad-CAM supports model inspection, but it does **not** prove clinical tumour localisation.
-
----
-
-## Confidence and Error Analysis
-
-The project compares prediction confidence for correct and incorrect predictions.
-
-The distributions overlap, demonstrating that:
-
-> **High softmax confidence does not guarantee a correct prediction.**
-
-Softmax scores are therefore treated as model confidence values, not calibrated clinical probabilities.
-
----
-
-## Flask Prototype
-
-A local Flask application was created to demonstrate model inference.
-
-```mermaid
-flowchart LR
-    A[Upload JPG/PNG CT Image] --> B[Flask Application]
-    B --> C[Preprocessing]
-    C --> D[Selected EfficientNetB0]
-    D --> E[Four-Class Probabilities]
-    D --> F[Grad-CAM]
-    E --> G[Prediction Page]
-    F --> G
-```
-
-The prototype can display:
-
-- uploaded CT image
-- predicted class
-- probabilities for all four classes
-- Grad-CAM overlay
-- non-clinical disclaimer
-
----
-
-## Repository Structure
-
-Based on the current repository layout:
+## Main Python Libraries
 
 ```text
-explainable-lung-cancer-classification/
-│
-├── Notebook/
-├── figures/
-├── flask app/
-├── model/
-├── README.md
-├── class_names.json
-├── model_metadata.json
-└── selected_model.keras.txt
+pandas
+numpy
+scikit-learn
+imbalanced-learn
+xgboost
+matplotlib
+plotly
+joblib
+pyarrow
 ```
 
-Research artefacts generated by the pipeline include manifests, audit reports, training histories, validation comparisons and final test predictions.
+## Running the Notebook on Kaggle
 
----
+1. Open Kaggle.
+2. Create a new notebook.
+3. Add the dataset:
+   https://www.kaggle.com/datasets/dhoogla/unswnb15
+4. Upload or import `final-notebook1.ipynb`.
+5. Confirm the two prepared Parquet files are available.
+6. Run the notebook from top to bottom.
 
-## Software and Libraries
+## Running Locally
 
-| Tool / Library | Role |
-|---|---|
-| Python | Core programming language |
-| Kaggle | Dataset hosting and GPU notebook execution |
-| TensorFlow / Keras | CNNs, transfer learning and model export |
-| scikit-learn | Class weights and evaluation metrics |
-| NumPy | Numerical operations |
-| Pandas | Manifests and analysis tables |
-| Matplotlib | EDA and result visualisation |
-| Pillow | Image handling |
-| Flask | Local web prototype |
-| Git / GitHub | Version control and traceability |
-
----
-
-## Running the Project
-
-### 1. Clone the Repository
+Install the required packages:
 
 ```bash
-git clone https://github.com/Nagasai-10/explainable-lung-cancer-classification.git
-cd explainable-lung-cancer-classification
+pip install pandas numpy scikit-learn imbalanced-learn xgboost matplotlib plotly joblib pyarrow
 ```
 
-### 2. Create a Virtual Environment
+Start Jupyter:
 
 ```bash
-python -m venv venv
+jupyter notebook
 ```
 
-### 3. Activate the Environment
-
-**Windows**
-
-```bash
-venv\Scripts\activate
-```
-
-**macOS / Linux**
-
-```bash
-source venv/bin/activate
-```
-
-### 4. Install Dependencies
-
-```bash
-pip install tensorflow flask numpy pandas scikit-learn matplotlib pillow
-```
-
-### 5. Download the Dataset
-
-https://www.kaggle.com/datasets/mohamedhanyyy/chest-ctscan-images
-
-### 6. Run the Notebook
-
-Open the project notebook inside the `Notebook/` directory using Kaggle, Jupyter Notebook or JupyterLab.
-
-### 7. Run the Flask Prototype
-
-```bash
-cd "flask app"
-python app.py
-```
-
-Then open the local address shown in the terminal, commonly:
+Open:
 
 ```text
-http://127.0.0.1:5000
+final-notebook1.ipynb
 ```
 
----
+Update the dataset path if the files are stored somewhere else locally.
+
+## Reproducibility
+
+The final workflow uses:
+
+```text
+random_state = 42
+```
+
+The notebook also exports reproducibility artefacts including:
+
+- `selected_final_pipeline.joblib`
+- `run_manifest.json`
+- CSV metrics
+- prediction outputs
+- report-ready figures
+
+## Ethical Scope
+
+This project uses **secondary public data only**.
+
+It does not involve:
+
+- human participants
+- surveys or interviews
+- live network traffic capture
+- penetration testing
+- active system probing
+- access to private organisational systems
+
+The work is intended for academic research and evaluation only.
 
 ## Limitations
 
-- relatively small public dataset
-- substantial duplicate structure in the original data
-- reduced Normal-class support after deduplication
-- possible source artefacts
-- no patient identifiers
-- patient-level independence cannot be verified
-- residual near-duplicate uncertainty
-- no independent external validation dataset
-- no clinical validation
-- no clinician or participant evaluation under the current UREC1 scope
-- Grad-CAM does not establish clinical localisation
-- softmax confidence is not a calibrated clinical probability
-
----
+- UNSW-NB15 is a controlled and dated benchmark.
+- Some rare classes contain very small numbers of examples.
+- The benchmark contains duplicate and cross-split overlap.
+- One stratified validation split was used for model selection.
+- The final model still produces a substantial false-alarm burden.
+- Feature importance represents predictive influence, not causality.
+- The model has not been validated as a production IDS.
 
 ## Future Work
 
-Potential extensions include:
+Possible extensions include:
 
-- larger DICOM-based datasets
-- patient-level train/validation/test splits
-- independent external validation
-- repeated random seeds
-- cross-validation
+- repeated or nested cross-validation
+- class-specific decision thresholds
 - probability calibration
-- additional model architectures
-- comparison with other explainability methods
-- improved CT intensity/window standardisation
-- expert evaluation after appropriate ethics approval
+- cost-sensitive threshold optimisation
+- contemporary intrusion-detection datasets
+- temporal and external validation
+- SHAP-based model interpretation
+- analyst evaluation under appropriate ethics approval
+- deployment-oriented latency and resource testing
 
----
+## Project Contribution
 
-## Ethics and Responsible Use
+The main contribution is a **reproducible imbalance-aware multiclass intrusion-detection workflow** that evaluates not only overall performance, but also:
 
-This project uses **secondary data only**.
+- low-frequency attack recall
+- class-specific precision and F1
+- Normal-traffic false alarms
+- precision-recall behaviour
+- duplicate/cross-split overlap
+- robustness under stricter evaluation conditions
 
-No participants, interviews, surveys, new CT scans, identifiable medical records or treatment recommendations were included.
+The results show that improving rare-attack sensitivity can create significant false-alarm costs, so overall accuracy alone is not sufficient for evaluating imbalanced intrusion-detection models.
 
-The prototype is intended only for academic demonstration.
+## References
 
----
+Moustafa, N., & Slay, J. (2015). UNSW-NB15: A comprehensive data set for network intrusion detection systems. *Military Communications and Information Systems Conference (MilCIS)*.
 
-## GitHub Repository
+Moustafa, N., & Slay, J. (2016). The evaluation of Network Anomaly Detection Systems: Statistical analysis of the UNSW-NB15 data set and the comparison with the KDD99 data set. *Information Security Journal: A Global Perspective, 25*(1-3), 18-31.
 
-https://github.com/Nagasai-10/explainable-lung-cancer-classification
+Chen, T., & Guestrin, C. (2016). XGBoost: A scalable tree boosting system. *Proceedings of the 22nd ACM SIGKDD International Conference on Knowledge Discovery and Data Mining*.
 
----
+Saito, T., & Rehmsmeier, M. (2015). The precision-recall plot is more informative than the ROC plot when evaluating binary classifiers on imbalanced datasets. *PLoS ONE, 10*(3), e0118432.
 
 ## Author
 
-**Nagasai Banothu**  
-MSc Data Science and Artificial Intelligence  
-Sheffield Hallam University  
-Student ID: **35040393**
+**BAJI BABU GUDIPATI**  
+MSc Advanced Computer Networking  
+Sheffield Hallam University
 
----
+## Disclaimer
 
-## Academic Disclaimer
-
-This model and Flask application are **not medical devices** and must not be used for diagnosis, treatment, triage or clinical decision-making.
-
----
-
-## Final Project Summary
-
-The project demonstrates that transfer learning can provide useful four-class discrimination on the selected chest CT dataset. EfficientNetB0 achieved the strongest validation performance and a held-out test macro-F1 of **81.31%**.
-
-The project also shows that **data quality matters as much as model choice**. Duplicate leakage, class imbalance, source artefacts and missing patient-level information materially affect how performance should be interpreted.
-
-> **Final conclusion:** The model is a useful academic prototype, but the current evidence is not sufficient for clinical generalisation.
+This repository is provided for academic research and educational purposes. It is not a production intrusion-detection system and should not be used as the sole basis for operational cybersecurity decisions.
